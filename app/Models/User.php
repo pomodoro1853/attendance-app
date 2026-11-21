@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -41,7 +42,30 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'admin_status' => 'boolean',
     ];
+
+    protected function attendanceStatus(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $record = $this->attendanceRecords()->where('date', today()->toDateString())->first();
+                if ($record === null) {
+                    return '勤務外';
+                }
+
+                if ($record->clock_out !== null) {
+                    return '退勤済';
+                }
+
+                if ($record->breaks()->whereNull('break_out')->exists()) {
+                    return '休憩中';
+                }
+
+                return '出勤中';
+            },
+        );
+    }
 
     public function attendanceRecords()
     {
