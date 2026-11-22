@@ -107,4 +107,15 @@ class RegisterTest extends TestCase
         $user = User::where('email', 'test@example.com')->first();
         $this->assertTrue(Hash::check('password123', $user->password));
     }
+
+    // 会員登録画面を開く → ログイン画面へのリンク（href="/login"）がある（FN004）
+    public function test_register_page_has_link_to_login(): void
+    {
+        $this->withoutVite();
+
+        $response = $this->get('/register');
+
+        $response->assertOk();
+        $response->assertSee('href="/login"', false);
+    }
 }
