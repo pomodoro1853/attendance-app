@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -7,12 +8,15 @@ use Illuminate\Support\Facades\Route;
 | Web Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| Fortify が作るルート（/register・/login・/logout など）は、ここには書かない。
 |
 */
 
+// ロゴのリンク先「/」。ログインの状態と権限で行き先を分ける
 Route::get('/', function () {
-    return view('welcome');
+    if (! Auth::check()) {
+        return redirect('/login');
+    }
+
+    return redirect(Auth::user()->admin_status ? '/admin/attendance/list' : '/attendance');
 });
