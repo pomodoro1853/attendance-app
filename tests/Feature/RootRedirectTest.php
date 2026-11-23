@@ -34,4 +34,13 @@ class RootRedirectTest extends TestCase
 
         $this->actingAs($admin)->get('/')->assertRedirect('/admin/attendance/list');
     }
+
+    // ログイン中にログイン画面を開いた → 「/」へ戻す（そこから権限ごとの画面へ行く）
+    public function test_logged_in_user_visiting_login_is_redirected_to_root(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/login')->assertRedirect('/');
+        $this->actingAs($user)->get('/admin/login')->assertRedirect('/');
+    }
 }
