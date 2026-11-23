@@ -46,6 +46,9 @@ class FortifyServiceProvider extends ServiceProvider
         // ログイン画面（US002）。提供ビュー views/user/user-login を使う
         Fortify::loginView(fn () => view('user.user-login'));
 
+        // メール認証誘導画面（FN011）。提供ビュー views/auth/verify-email を使う
+        Fortify::verifyEmailView(fn () => view('auth.verify-email'));
+
         // ログインの判定（US002・US004）。ユーザーを返すと成功、null を返すと「ログイン情報が登録されていません」
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('email', $request->email)->first();

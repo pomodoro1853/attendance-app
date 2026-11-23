@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\LoginController as AdminLoginController;
+use App\Http\Controllers\AttendanceController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -28,3 +29,8 @@ Route::get('/', function () {
 Route::get('/admin/login', [AdminLoginController::class, 'create'])->middleware('guest');
 Route::post('/admin/login', [AuthenticatedSessionController::class, 'store'])->middleware(['guest', 'throttle:login']);
 Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth');
+
+// 一般ユーザーの画面。メールの確認が済んでいない人は、メール認証誘導画面へ送られる（FN011）
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/attendance', [AttendanceController::class, 'index']);
+});
