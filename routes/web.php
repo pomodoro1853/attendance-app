@@ -33,4 +33,5 @@ Route::post('/admin/logout', [AuthenticatedSessionController::class, 'destroy'])
 // 一般ユーザーの画面。メールの確認が済んでいない人は、メール認証誘導画面へ送られる（FN011）
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance', [AttendanceController::class, 'index']);
+    Route::post('/attendance', [AttendanceController::class, 'store']);
 });
