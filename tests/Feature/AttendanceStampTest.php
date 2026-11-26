@@ -8,7 +8,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 // US006 打刻（FN020 出勤・FN021 休憩・FN022 退勤。テストケース一覧 ID6〜ID8）
-// 「勤怠一覧画面で確認できる」の項目は、勤怠一覧（US007・ID9）を作るときに足す
 class AttendanceStampTest extends TestCase
 {
     use RefreshDatabase;
@@ -126,6 +125,36 @@ class AttendanceStampTest extends TestCase
             ->assertSee('退勤済')
             ->assertSee('お疲れ様でした。');
         $this->assertDatabaseHas('attendance_records', ['user_id' => $this->user->id, 'clock_out' => '18:00:00']);
+    }
+
+    // 出勤の時刻が、勤怠一覧のその日の行に出る（ID6）
+    public function test_clock_in_time_is_shown_in_list(): void
+    {
+        $this->stamp('clock_in');
+
+        $this->actingAs($this->user)->get('/attendance/list')->assertSeeInOrder(['06/01(木)', '08:00']);
+    }
+
+    // 休憩の合計が、勤怠一覧のその日の行に出る（ID7。一覧には休憩の合計だけが出る）
+    public function test_break_time_is_shown_in_list(): void
+    {
+        $this->stamp('clock_in');
+        $this->travelTo('2023-06-01 12:00:00');
+        $this->stamp('break_in');
+        $this->travelTo('2023-06-01 13:00:00');
+        $this->stamp('break_out');
+
+        $this->actingAs($this->user)->get('/attendance/list')->assertSeeInOrder(['06/01(木)', '08:00', '1:00']);
+    }
+
+    // 退勤の時刻が、勤怠一覧のその日の行に出る（ID8）
+    public function test_clock_out_time_is_shown_in_list(): void
+    {
+        $this->stamp('clock_in');
+        $this->travelTo('2023-06-01 18:00:00');
+        $this->stamp('clock_out');
+
+        $this->actingAs($this->user)->get('/attendance/list')->assertSeeInOrder(['06/01(木)', '08:00', '18:00']);
     }
 
     // 勤務外のまま「休憩入」を送っても、何も記録されず、エラーにもならない
