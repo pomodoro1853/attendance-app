@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AttendanceRecord;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 // 開発プロセス.md「ダミーデータ」が、書かれた予測値どおりに作れるか
@@ -55,6 +56,24 @@ class SeederTest extends TestCase
         $this->assertSame(92, $records->count());
         $this->assertSame(744 * 60, $workMinutes);
         $this->assertSame(10 * 60, $overtimeMinutes);
+    }
+
+    // user1 の過去 5 か月: 各月 15 日が、月の初めに固まらず下旬まで散らばっている（「日付分布は実運用に近い内容」）
+    public function test_user1_past_months_are_spread_over_the_month(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'user1@example.com')->first();
+
+        for ($monthsAgo = 5; $monthsAgo >= 1; $monthsAgo--) {
+            $month = today()->startOfMonth()->subMonthsNoOverflow($monthsAgo);
+            $dates = $user->attendanceRecords()
+                ->whereBetween('date', [$month->toDateString(), $month->copy()->endOfMonth()->toDateString()])
+                ->pluck('date');
+
+            $this->assertSame(15, $dates->count(), $month->format('Y-m'));
+            // 月の初めから 15 日だと、最後の日はどの月でも 21 日以前になる。散らばっていれば 23 日以降まで届く
+            $this->assertGreaterThan(22, Carbon::parse($dates->max())->day, $month->format('Y-m'));
+        }
     }
 
     // user1 の当月: 17 日・遅刻 2 回・早退 1 回・長時間労働（10 時間超）1 日

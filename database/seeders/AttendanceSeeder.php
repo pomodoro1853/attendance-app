@@ -28,12 +28,12 @@ class AttendanceSeeder extends Seeder
         $this->seedRealistic(User::where('email', 'user3@example.com')->first(), 3);
     }
 
-    // user1: 過去 5 か月は各月の最初の平日 15 日を 9:00〜18:00、当月は最初の平日 17 日を内訳どおりに作る
+    // user1: 過去 5 か月は各月の平日から月全体に散らして 15 日を 9:00〜18:00、当月は最初の平日 17 日を内訳どおりに作る
     private function seedUser1(User $user): void
     {
         for ($monthsAgo = 5; $monthsAgo >= 1; $monthsAgo--) {
             $month = today()->startOfMonth()->subMonthsNoOverflow($monthsAgo);
-            foreach ($this->weekdays($month, 15) as $date) {
+            foreach ($this->spreadWeekdays($month, 15) as $date) {
                 $this->createRecord($user, $date, '09:00', '18:00');
             }
         }
@@ -76,6 +76,28 @@ class AttendanceSeeder extends Seeder
                 $dates[] = $date->toDateString();
             }
             $date->addDay();
+        }
+
+        return $dates;
+    }
+
+    // その月の平日の中から、月の初めから終わりまで均等に散らばるように $count 日を選ぶ（過去の月だけに使う）
+    // 例: 平日が 21 日なら、0・1・2・4・5・…番目のように、だいたい 3 日おきに 1 日を飛ばす
+    private function spreadWeekdays(Carbon $month, int $count): array
+    {
+        $all = [];
+        $date = $month->copy();
+        while ($date->month === $month->month) {
+            if ($date->isWeekday()) {
+                $all[] = $date->toDateString();
+            }
+            $date->addDay();
+        }
+
+        $dates = [];
+        for ($i = 0; $i < $count; $i++) {
+            // 平日の数を $count 個に等分したときの、i 番目の区切りの位置。intdiv は割り算の小数を切り捨てる
+            $dates[] = $all[intdiv($i * count($all), $count)];
         }
 
         return $dates;
