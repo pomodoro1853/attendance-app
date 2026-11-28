@@ -36,4 +36,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance', [AttendanceController::class, 'index']);
     Route::post('/attendance', [AttendanceController::class, 'store']);
     Route::get('/attendance/list', [AttendanceRecordController::class, 'index']);
+    // {id} は数字だけにする。/attendance/list などが {id} に吸い込まれないようにするため
+    Route::get('/attendance/{id}', [AttendanceRecordController::class, 'show'])->whereNumber('id');
 });
